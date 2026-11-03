@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ghras</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --olive-900:#3a4326; --olive-700:#556138; --olive-500:#78894f;
+    --olive-300:#a9b982; --olive-100:#e2e8d1;
+    --brown-700:#5c4630; --brown-500:#8a6a48; --brown-300:#c3a37c;
+    --beige:#f4efe3; --beige-deep:#ece3cf; --white:#fffdf8;
+    --gold:#c08a2e; --gold-100:#fbf1d8; --gold-300:#ecd695;
+    --ink:#2e2a22; --ink-soft:#6b6455;
+    --radius-lg:20px; --radius-md:14px;
+    font-family:"IBM Plex Sans", sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:#d8d2c2;display:flex;justify-content:center;padding:32px 12px;}
+  .frame{
+    width:390px;height:800px;
+    background:var(--beige);
+    border-radius:36px;border:8px solid #2c2a24;
+    overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,0.25);
+    position:relative;display:flex;flex-direction:column;
+  }
+  .pages{flex:1;overflow-y:auto;position:relative;}
+  .pages::-webkit-scrollbar{display:none;}
+  .page{display:none;padding-bottom:14px;}
+  .page.active{display:block;}
+
+  .topbar{padding:22px 20px 14px;display:flex;justify-content:space-between;align-items:flex-start;}
+  .greeting{font-family:"Fraunces", serif;font-size:21px;font-weight:500;color:var(--olive-900);margin:0;}
+  .subgreeting{font-size:12.5px;color:var(--ink-soft);margin:4px 0 0;}
+  .page-title{font-family:"Fraunces", serif;font-size:20px;font-weight:500;color:var(--olive-900);margin:0;padding:22px 20px 4px;}
+  .page-sub{font-size:12.5px;color:var(--ink-soft);margin:0;padding:0 20px 14px;}
+  .brand{display:flex;align-items:center;gap:6px;font-family:"Fraunces", serif;font-weight:600;font-size:14px;color:var(--olive-700);}
+  .brand-mark{width:20px;height:20px;border-radius:50%;background:var(--olive-700);display:flex;align-items:center;justify-content:center;color:var(--beige);font-size:11px;}
+
+  .section{margin:0 18px 14px;}
+  .card{background:var(--white);border-radius:var(--radius-md);padding:16px;border:1px solid #e7e0cd;}
+
+  .tree-card{
+    margin:6px 18px 14px;background:linear-gradient(180deg, var(--olive-100) 0%, var(--beige-deep) 100%);
+    border-radius:var(--radius-lg);padding:16px 16px 12px;text-align:center;position:relative;border:1px solid #d9d0b8;cursor:pointer;
+  }
+  .tree-stage-label{font-size:11.5px;letter-spacing:.04em;color:var(--olive-700);font-weight:600;text-transform:uppercase;}
+  .tree-svg-wrap{display:flex;justify-content:center;padding:4px 0 2px;}
+  .tap-hint{font-size:11px;color:var(--ink-soft);margin:2px 0 0;}
+  .toast{
+    position:absolute;left:50%;top:8px;transform:translate(-50%,-14px);
+    background:var(--olive-900);color:var(--beige);padding:8px 14px;border-radius:999px;font-size:12px;
+    opacity:0;transition:opacity .35s ease, transform .35s ease;white-space:nowrap;pointer-events:none;z-index:3;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0);}
+
+  .goal-head{display:flex;justify-content:space-between;align-items:baseline;}
+  .goal-name{font-family:"Fraunces", serif;font-size:15.5px;font-weight:500;color:var(--ink);margin:0;}
+  .goal-edit{font-size:12px;color:var(--brown-500);border:none;background:none;font-weight:600;cursor:pointer;}
+  .goal-amounts{display:flex;justify-content:space-between;margin:9px 0 8px;font-size:12.5px;color:var(--ink-soft);}
+  .goal-amounts b{color:var(--ink);font-weight:600;}
+  .bar-track{height:9px;border-radius:999px;background:var(--olive-100);overflow:hidden;}
+  .bar-fill{height:100%;background:linear-gradient(90deg, var(--olive-500), var(--olive-700));border-radius:999px;transition:width .5s ease;}
+  .goal-pct{margin-top:7px;font-size:11.5px;color:var(--olive-700);font-weight:600;}
+
+  .sim-btn{width:100%;margin-top:12px;background:var(--brown-700);color:var(--beige);border:none;border-radius:999px;padding:12px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:"IBM Plex Sans", sans-serif;}
+  .sim-btn:active{transform:scale(.98);}
+  .sim-sub{font-size:10.5px;color:var(--ink-soft);text-align:center;margin-top:6px;}
+
+  .dash-title{font-family:"Fraunces", serif;font-size:15.5px;font-weight:500;color:var(--ink);margin:0 0 10px;}
+  .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .stat{background:var(--olive-100);border-radius:var(--radius-md);padding:12px;}
+  .stat-val{font-size:18px;font-weight:600;color:var(--olive-900);font-family:"Fraunces", serif;}
+  .stat-label{font-size:11px;color:var(--ink-soft);margin-top:2px;}
+
+  .goal-card{background:var(--white);border-radius:var(--radius-md);padding:14px;border:1px solid #e7e0cd;margin-bottom:10px;}
+  .goal-card-top{display:flex;align-items:center;gap:10px;}
+  .goal-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+  .goal-title-wrap{flex:1;}
+  .goal-title{font-family:"Fraunces", serif;font-size:14.5px;font-weight:500;color:var(--ink);margin:0;}
+  .goal-date{font-size:10.5px;color:var(--ink-soft);}
+  .add-goal-btn{width:100%;border:1.5px dashed var(--olive-300);background:none;border-radius:var(--radius-md);padding:12px;color:var(--olive-700);font-weight:600;font-size:13px;cursor:pointer;font-family:"IBM Plex Sans", sans-serif;}
+
+  .ach-list{display:flex;flex-direction:column;gap:10px;}
+  .ach-row{display:flex;gap:12px;background:var(--white);border:1px solid #e7e0cd;border-radius:var(--radius-md);padding:12px;opacity:.5;}
+  .ach-row.unlocked{opacity:1;background:var(--gold-100);border-color:var(--gold-300);}
+  .ach-badge{width:38px;height:38px;border-radius:50%;background:var(--olive-100);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .ach-row.unlocked .ach-badge{background:var(--gold);}
+  .ach-name2{font-family:"Fraunces", serif;font-size:14px;font-weight:500;color:var(--ink);margin:0;}
+  .ach-desc{font-size:11.5px;color:var(--ink-soft);margin:2px 0 6px;}
+  .ach-meta{font-size:10.5px;color:var(--olive-700);font-weight:600;}
+  .ach-bar-track{height:6px;border-radius:999px;background:var(--olive-100);overflow:hidden;margin-top:6px;}
+  .ach-bar-fill{height:100%;background:var(--olive-500);border-radius:999px;}
+
+  .settings-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid #ece5d2;font-size:13px;color:var(--ink);}
+  .settings-row:last-child{border-bottom:none;}
+  .settings-block{margin-bottom:6px;}
+  .settings-block-title{font-size:11.5px;font-weight:600;color:var(--olive-700);text-transform:uppercase;letter-spacing:.03em;margin:14px 0 6px;}
+  .settings-block-title:first-child{margin-top:0;}
+  .switch{width:38px;height:21px;border-radius:999px;background:var(--olive-300);position:relative;cursor:pointer;flex-shrink:0;transition:background .2s;}
+  .switch.on{background:var(--olive-700);}
+  .switch::after{content:'';position:absolute;top:2px;left:2px;width:17px;height:17px;border-radius:50%;background:var(--white);transition:left .2s;}
+  .switch.on::after{left:19px;}
+  .row-arrow{color:var(--ink-soft);}
+  .segmented{display:flex;gap:6px;margin-top:8px;}
+  .seg-btn{flex:1;text-align:center;padding:8px 4px;border-radius:10px;border:1px solid #e0d8c2;background:var(--beige-deep);font-size:12.5px;font-weight:600;color:var(--ink-soft);cursor:pointer;}
+  .seg-btn.active{background:var(--olive-700);color:var(--beige);border-color:var(--olive-700);}
+  .example-box{background:var(--olive-100);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:12px;color:var(--ink);line-height:1.55;}
+  .example-box b{color:var(--olive-900);}
+
+  .bottomnav{display:flex;border-top:1px solid #e0d8c2;background:var(--white);padding:6px 4px 10px;}
+  .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;color:var(--ink-soft);padding:4px 0;font-family:"IBM Plex Sans", sans-serif;}
+  .nav-btn.active{color:var(--olive-700);}
+  .nav-icon{font-size:17px;}
+  .nav-label{font-size:9.5px;font-weight:600;}
+
+  .modal-overlay{position:absolute;inset:0;background:rgba(35,32,20,0.45);display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .25s ease;z-index:10;}
+  .modal-overlay.open{opacity:1;pointer-events:auto;}
+  .modal{width:100%;max-height:80%;overflow-y:auto;background:var(--beige);border-radius:24px 24px 0 0;padding:18px 20px 24px;transform:translateY(100%);transition:transform .3s ease;}
+  .modal-overlay.open .modal{transform:translateY(0);}
+  .modal-handle{width:36px;height:4px;background:var(--olive-300);border-radius:999px;margin:0 auto 14px;}
+  .modal-title{font-family:"Fraunces", serif;font-size:17px;font-weight:500;margin:0 0 4px;color:var(--ink);}
+  .modal-sub{font-size:12px;color:var(--ink-soft);margin:0 0 14px;}
+  .field-label{font-size:11.5px;font-weight:600;color:var(--olive-700);margin:12px 0 5px;text-transform:uppercase;letter-spacing:.03em;}
+  .field-input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #e0d8c2;background:var(--white);font-size:14px;color:var(--ink);font-family:"IBM Plex Sans", sans-serif;}
+  .swatches{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;}
+  .swatch{width:30px;height:30px;border-radius:50%;cursor:pointer;border:2px solid transparent;}
+  .swatch.selected{border-color:var(--ink);}
+  .icon-choice{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;background:var(--white);border:1px solid #e0d8c2;}
+  .icon-choice.selected{border:2px solid var(--olive-700);}
+  .modal-actions{display:flex;gap:10px;margin-top:18px;}
+  .modal-btn{flex:1;border-radius:999px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;font-family:"IBM Plex Sans", sans-serif;border:none;}
+  .modal-btn.primary{background:var(--olive-700);color:var(--beige);}
+  .modal-btn.secondary{background:none;border:1px solid var(--olive-300);color:var(--olive-900);}
+  .modal-btn.danger{background:none;border:1px solid #c96b5a;color:#a34535;}
+
+  .watering-list{display:flex;flex-direction:column;gap:8px;}
+  .watering-row{display:flex;justify-content:space-between;font-size:12.5px;padding:9px 0;border-bottom:1px solid #ece5d2;color:var(--ink);}
+  .watering-row:last-child{border-bottom:none;}
+  .watering-row span.amt{color:var(--olive-700);font-weight:600;}
+  .milestone-list{display:flex;flex-direction:column;gap:8px;margin-top:4px;}
+  .milestone-row{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--ink-soft);}
+  .milestone-row.done{color:var(--ink);font-weight:600;}
+  .milestone-dot{width:8px;height:8px;border-radius:50%;background:var(--olive-300);flex-shrink:0;}
+  .milestone-row.done .milestone-dot{background:var(--olive-700);}
+</style>
+</head>
+<body>
+
+<div class="frame">
+  <div class="pages" id="pages">
+
+    <!-- HOME -->
+    <div class="page active" data-page="home">
+      <div class="topbar">
+        <div>
+          <p class="greeting">Marhaba, Sara</p>
+          <p class="subgreeting" id="homeSub">Your palm has grown for 42 days</p>
+        </div>
+        <div class="brand"><span class="brand-mark">🌴</span> Ghras</div>
+      </div>
+
+      <div class="tree-card" onclick="goTo('tree')">
+        <div class="toast" id="toast">SAR 0.50 added — your palm tree grew</div>
+        <p class="tree-stage-label" id="stageLabelHome">Flowering</p>
+        <div class="tree-svg-wrap" id="treeSvgHome"></div>
+        <p class="tap-hint">Tap to open My Palm Tree</p>
+      </div>
+
+      <div class="section">
+        <div class="card">
+          <div class="goal-head">
+            <p class="goal-name" id="homeGoalName">Buy a car</p>
+            <button class="goal-edit" onclick="event.stopPropagation(); goTo('goals')">See goals</button>
+          </div>
+          <div class="goal-amounts">
+            <span>Saved <b id="curAmt">SAR 2,340</b></span>
+            <span>Goal <b id="homeGoalTarget">SAR 12,000</b></span>
+          </div>
+          <div class="bar-track"><div class="bar-fill" id="barFill" style="width:19.5%"></div></div>
+          <p class="goal-pct" id="pctLabel">19.5% of the way there</p>
+          <button class="sim-btn" id="simBtn">Simulate a purchase round-up</button>
+          <p class="sim-sub">Demo control — applies your round-up and multiplier settings</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MY PALM TREE -->
+    <div class="page" data-page="tree">
+      <p class="page-title">My palm tree</p>
+      <p class="page-sub">A living picture of your savings journey.</p>
+      <div class="tree-card" style="cursor:default;">
+        <p class="tree-stage-label" id="stageLabelTree">Flowering</p>
+        <div class="tree-svg-wrap" id="treeSvgTree"></div>
+        <p class="tap-hint" id="treeDescTree">Flowers begin to bloom.</p>
+      </div>
+      <div class="section">
+        <div class="card">
+          <p class="dash-title">Overview</p>
+          <div class="dash-grid">
+            <div class="stat"><div class="stat-val" id="treeTotal">SAR 2,340</div><div class="stat-label">Total savings</div></div>
+            <div class="stat"><div class="stat-val" id="treeWaterings">186</div><div class="stat-label">Waterings</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="card">
+          <p class="dash-title">Growth milestones</p>
+          <div class="milestone-list" id="milestoneList"></div>
+        </div>
+      </div>
+      <div class="section" style="margin-bottom:6px;">
+        <div class="card">
+          <p class="dash-title">Watering history</p>
+          <div class="watering-list" id="wateringList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GOALS -->
+    <div class="page" data-page="goals">
+      <p class="page-title">Goals</p>
+      <p class="page-sub">Create, edit, or switch between savings goals.</p>
+      <div class="section" style="margin-bottom:6px;">
+        <div id="goalsList"></div>
+        <button class="add-goal-btn" id="addGoalBtn">+ New goal</button>
+      </div>
+    </div>
+
+    <!-- PROGRESS -->
+    <div class="page" data-page="progress">
+      <p class="page-title">Progress</p>
+      <p class="page-sub">Your savings journey, at a glance.</p>
+      <div class="section">
+        <div class="card">
+          <div class="dash-grid">
+            <div class="stat"><div class="stat-val" id="progTotal">SAR 2,340</div><div class="stat-label">Total saved</div></div>
+            <div class="stat"><div class="stat-val" id="progRoundups">186</div><div class="stat-label">Round-up transactions</div></div>
+            <div class="stat"><div class="stat-val" id="progSpare">SAR 890</div><div class="stat-label">From spare change</div></div>
+            <div class="stat"><div class="stat-val">42</div><div class="stat-label">Days saving</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="section" style="margin-bottom:6px;">
+        <div class="card">
+          <p class="dash-title">Goal completion</p>
+          <div class="bar-track"><div class="bar-fill" id="progBar" style="width:19.5%"></div></div>
+          <p class="goal-pct" id="progPct">19.5% of your goal reached</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACHIEVEMENTS -->
+    <div class="page" data-page="achievements">
+      <p class="page-title">Achievements</p>
+      <p class="page-sub">Unlocked automatically as you progress.</p>
+      <div class="section" style="margin-bottom:6px;">
+        <div class="ach-list" id="achList"></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" data-page="settings">
+      <p class="page-title">Settings</p>
+      <p class="page-sub">Personalize how your automatic savings work.</p>
+
+      <div class="section" style="margin-bottom:6px;">
+        <div class="card">
+          <div class="settings-block-title">Automatic round-up</div>
+          <div class="settings-row">
+            <span>Enable automatic round-up</span>
+            <div class="switch on" id="roundupSwitch"></div>
+          </div>
+          <div class="settings-block-title">Round-up amount</div>
+          <div class="segmented" id="roundupSeg">
+            <div class="seg-btn" data-val="1">Nearest SAR 1</div>
+            <div class="seg-btn" data-val="5">Nearest SAR 5</div>
+            <div class="seg-btn" data-val="10">Nearest SAR 10</div>
+          </div>
+
+          <div class="settings-block-title">Savings multiplier</div>
+          <div class="segmented" id="multSeg">
+            <div class="seg-btn" data-val="1">1×</div>
+            <div class="seg-btn" data-val="2">2×</div>
+            <div class="seg-btn" data-val="3">3×</div>
+            <div class="seg-btn" data-val="5">5×</div>
+            <div class="seg-btn" data-val="10">10×</div>
+          </div>
+          <div class="example-box" id="exampleBox"></div>
+        </div>
+      </div>
+
+      <div class="section" style="margin-bottom:6px;">
+        <div class="card">
+          <div class="settings-block-title">Notifications</div>
+          <div class="settings-row"><span>Every savings transaction</span><div class="switch on" data-notif="tx"></div></div>
+          <div class="settings-row"><span>Goal milestones</span><div class="switch on" data-notif="goal"></div></div>
+          <div class="settings-row"><span>Achievement unlocks</span><div class="switch on" data-notif="ach"></div></div>
+          <div class="settings-row"><span>Weekly savings summary</span><div class="switch" data-notif="weekly"></div></div>
+        </div>
+      </div>
+
+      <div class="section" style="margin-bottom:6px;">
+        <div class="card">
+          <div class="settings-row" style="cursor:pointer;" onclick="goTo('goals')"><span>Manage goals</span><span class="row-arrow">›</span></div>
+          <div class="settings-row" style="cursor:pointer;" onclick="goTo('progress')"><span>View savings history</span><span class="row-arrow">›</span></div>
+          <div class="settings-row" style="cursor:pointer;" onclick="alert('This opens help and support.')"><span>Help and support</span><span class="row-arrow">›</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="bottomnav" id="bottomnav">
+    <button class="nav-btn active" data-page="home"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>
+    <button class="nav-btn" data-page="tree"><span class="nav-icon">🌴</span><span class="nav-label">Palm tree</span></button>
+    <button class="nav-btn" data-page="goals"><span class="nav-icon">🎯</span><span class="nav-label">Goals</span></button>
+    <button class="nav-btn" data-page="progress"><span class="nav-icon">📊</span><span class="nav-label">Progress</span></button>
+    <button class="nav-btn" data-page="achievements"><span class="nav-icon">🏆</span><span class="nav-label">Achievements</span></button>
+    <button class="nav-btn" data-page="settings"><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span></button>
+  </div>
+
+  <div class="modal-overlay" id="goalModalOverlay">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <p class="modal-title" id="goalModalTitle">New goal</p>
+      <p class="modal-sub">Set what you're saving for.</p>
+
+      <div class="field-label">Goal name</div>
+      <input class="field-input" id="fGoalName" placeholder="e.g. Umrah trip" />
+
+      <div class="field-label">Target amount (SAR)</div>
+      <input class="field-input" id="fGoalTarget" type="number" min="1" placeholder="e.g. 5000" />
+
+      <div class="field-label">Target date</div>
+      <input class="field-input" id="fGoalDate" type="date" />
+
+      <div class="field-label">Icon</div>
+      <div class="swatches" id="fGoalIcons"></div>
+
+      <div class="field-label">Color</div>
+      <div class="swatches" id="fGoalColors"></div>
+
+      <div class="modal-actions">
+        <button class="modal-btn secondary" id="goalCancelBtn">Cancel</button>
+        <button class="modal-btn primary" id="goalSaveBtn">Save goal</button>
+      </div>
+      <div class="modal-actions" id="goalDeleteWrap" style="display:none;">
+        <button class="modal-btn danger" id="goalDeleteBtn">Delete goal</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const GOAL_ICONS = ["🚗","🏠","✈️","🎓","💍","🕋","💻","🎁"];
+const GOAL_COLORS = ["#78894f","#8a6a48","#c08a2e","#6b8fa3","#a35d5d","#7a6ba0"];
+
+const STAGES = [
+  {min:0,    name:"Seed",             desc:"Just getting started — your first riyal is on its way."},
+  {min:100,  name:"First leaf",       desc:"The first green leaf appears."},
+  {min:200,  name:"Second leaf",      desc:"Another leaf grows."},
+  {min:500,  name:"Trunk forming",    desc:"The trunk starts growing."},
+  {min:1000, name:"Mature palm",      desc:"The palm becomes mature."},
+  {min:2000, name:"Flowering",        desc:"Flowers begin to bloom."},
+  {min:3000, name:"Bearing dates",    desc:"The palm produces dates."}
+];
+
+let state = {
+  saved: 2340,
+  spareChange: 890,
+  roundups: 186,
+  daysSaving: 42,
+  roundupEnabled: true,
+  roundupUnit: 1,
+  multiplier: 1,
+  notif: {tx:true, goal:true, ach:true, weekly:false},
+  wateringHistory: [
+    {amt:0.75, days:0},{amt:0.40, days:1},{amt:1.20, days:1},{amt:0.60, days:3},{amt:0.90, days:4}
+  ],
+  goals: [
+    {id:1, name:"Buy a car", target:12000, date:"2027-06-01", icon:"🚗", color:"#78894f"}
+  ],
+  activeGoalId: 1
+};
+
+function stageIndex(saved){
+  let idx = 0;
+  STAGES.forEach((s,i)=>{ if(saved >= s.min) idx = i; });
+  return idx;
+}
+
+function activeGoal(){
+  return state.goals.find(g => g.id === state.activeGoalId) || state.goals[0];
+}
+
+function fmt(n){ return 'SAR ' + Math.round(n).toLocaleString(); }
+
+function treeSVG(idx){
+  const leaf1 = idx>=1, leaf2 = idx>=2, trunkTall = idx>=3, mature = idx>=4, flowers = idx>=5, dates = idx>=6;
+  return `
+  <svg width="150" height="150" viewBox="0 0 150 150">
+    <ellipse cx="75" cy="136" rx="46" ry="8" fill="#c3a37c" opacity="0.5"/>
+    <path d="M75 140 L75 ${trunkTall ? 60 : 100}" stroke="#5c4630" stroke-width="9" stroke-linecap="round"/>
+    ${leaf1 ? `<path d="M75 ${trunkTall?98:110} C 55 ${trunkTall?90:100}, 45 ${trunkTall?85:96}, 32 ${trunkTall?80:92}" stroke="#78894f" stroke-width="7" fill="none" stroke-linecap="round"/>` : ''}
+    ${leaf2 ? `<path d="M75 ${trunkTall?98:110} C 95 ${trunkTall?90:100}, 105 ${trunkTall?85:96}, 118 ${trunkTall?80:92}" stroke="#78894f" stroke-width="7" fill="none" stroke-linecap="round"/>` : ''}
+    ${mature ? `
+      <path d="M75 68 C 50 50, 30 52, 20 40" stroke="#556138" stroke-width="9" fill="none" stroke-linecap="round"/>
+      <path d="M75 68 C 100 50, 120 52, 130 40" stroke="#556138" stroke-width="9" fill="none" stroke-linecap="round"/>
+      <path d="M75 64 C 60 38, 55 25, 46 12" stroke="#78894f" stroke-width="8" fill="none" stroke-linecap="round"/>
+      <path d="M75 64 C 90 38, 95 25, 104 12" stroke="#78894f" stroke-width="8" fill="none" stroke-linecap="round"/>
+      <path d="M75 60 L75 10" stroke="#78894f" stroke-width="8" fill="none" stroke-linecap="round"/>
+      <circle cx="68" cy="58" r="6" fill="#5c4630"/>
+      <circle cx="82" cy="60" r="6" fill="#5c4630"/>
+      <circle cx="75" cy="50" r="6" fill="#8a6a48"/>
+    ` : ''}
+    ${flowers ? `
+      <circle cx="52" cy="34" r="4" fill="#d4849a"/>
+      <circle cx="98" cy="34" r="4" fill="#d4849a"/>
+      <circle cx="75" cy="24" r="4" fill="#d4849a"/>
+    ` : ''}
+    ${dates ? `
+      <circle cx="60" cy="72" r="5" fill="#a35d2b"/>
+      <circle cx="66" cy="78" r="5" fill="#a35d2b"/>
+      <circle cx="90" cy="72" r="5" fill="#a35d2b"/>
+      <circle cx="84" cy="78" r="5" fill="#a35d2b"/>
+    ` : ''}
+  </svg>`;
+}
+
+function renderTree(){
+  const idx = stageIndex(state.saved);
+  const stage = STAGES[idx];
+  document.getElementById('stageLabelHome').textContent = stage.name;
+  document.getElementById('stageLabelTree').textContent = stage.name;
+  document.getElementById('treeDescTree').textContent = stage.desc;
+  document.getElementById('treeSvgHome').innerHTML = treeSVG(idx);
+  document.getElementById('treeSvgTree').innerHTML = treeSVG(idx);
+  document.getElementById('treeTotal').textContent = fmt(state.saved);
+  document.getElementById('treeWaterings').textContent = state.roundups;
+
+  const msWrap = document.getElementById('milestoneList');
+  msWrap.innerHTML = STAGES.map(s => {
+    const done = state.saved >= s.min;
+    return `<div class="milestone-row ${done?'done':''}"><span class="milestone-dot"></span>${s.min===0?'0':s.min.toLocaleString()}+ SAR — ${s.name}</div>`;
+  }).join('');
+
+  const whWrap = document.getElementById('wateringList');
+  whWrap.innerHTML = state.wateringHistory.slice(0,8).map(w => {
+    const label = w.days===0 ? 'Today' : (w.days===1 ? 'Yesterday' : w.days+' days ago');
+    return `<div class="watering-row"><span>${label}</span><span class="amt">+SAR ${w.amt.toFixed(2)}</span></div>`;
+  }).join('');
+}
+
+function renderHomeGoal(){
+  const g = activeGoal();
+  const pct = Math.min(100, (state.saved/g.target)*100);
+  document.getElementById('homeGoalName').textContent = g.name;
+  document.getElementById('homeGoalTarget').textContent = fmt(g.target);
+  document.getElementById('curAmt').textContent = fmt(state.saved);
+  document.getElementById('barFill').style.width = pct.toFixed(1)+'%';
+  document.getElementById('pctLabel').textContent = pct.toFixed(1)+'% of the way there';
+  document.getElementById('progBar').style.width = pct.toFixed(1)+'%';
+  document.getElementById('progPct').textContent = pct.toFixed(1)+'% of your goal reached';
+}
+
+function renderProgress(){
+  document.getElementById('progTotal').textContent = fmt(state.saved);
+  document.getElementById('progRoundups').textContent = state.roundups;
+  document.getElementById('progSpare').textContent = fmt(state.spareChange);
+}
+
+function renderGoalsPage(){
+  const wrap = document.getElementById('goalsList');
+  wrap.innerHTML = state.goals.map(g => {
+    const pct = Math.min(100, (state.saved/g.target)*100);
+    return `<div class="goal-card">
+      <div class="goal-card-top">
+        <div class="goal-icon" style="background:${g.color}22;color:${g.color}">${g.icon}</div>
+        <div class="goal-title-wrap">
+          <p class="goal-title">${g.name}</p>
+          <p class="goal-date">Target ${new Date(g.date).toLocaleDateString('en-GB',{month:'short',year:'numeric'})} · ${fmt(g.target)}</p>
+        </div>
+        <button class="goal-edit" onclick="openGoalModal(${g.id})">Edit</button>
+      </div>
+      <div class="bar-track" style="margin-top:10px;"><div class="bar-fill" style="width:${pct.toFixed(1)}%;background:${g.color}"></div></div>
+      <p class="goal-pct" style="color:${g.color}">${pct.toFixed(1)}% complete</p>
+    </div>`;
+  }).join('');
+}
+
+function daysStreak(){ return state.daysSaving; }
+
+const ACHIEVEMENTS = [
+  {id:'first', badge:'🥉', name:'First savings', desc:'Made your first round-up transaction.',
+    test: s => s.roundups >= 1, progress: s => Math.min(1, s.roundups/1)},
+  {id:'hundred', badge:'🥈', name:'Saved SAR 100', desc:'Reached SAR 100 in total savings.',
+    test: s => s.saved >= 100, progress: s => Math.min(1, s.saved/100)},
+  {id:'streak', badge:'🥇', name:'30 days saving streak', desc:'Kept saving for 30 days straight.',
+    test: s => daysStreak() >= 30, progress: s => Math.min(1, daysStreak()/30)},
+  {id:'grown', badge:'🌴', name:'First fully grown palm', desc:'Reached the mature palm stage.',
+    test: s => s.saved >= 1000, progress: s => Math.min(1, s.saved/1000)},
+  {id:'goalDone', badge:'🎯', name:'First goal completed', desc:'Reached 100% of a savings goal.',
+    test: s => state.goals.some(g => s.saved >= g.target), progress: s => {
+      const g = activeGoal(); return Math.min(1, s.saved/g.target);
+    }}
+];
+let unlockDates = {};
+
+function renderAchievements(){
+  const wrap = document.getElementById('achList');
+  wrap.innerHTML = ACHIEVEMENTS.map(a => {
+    const unlocked = a.test(state);
+    if(unlocked && !unlockDates[a.id]) unlockDates[a.id] = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+    const prog = Math.round(a.progress(state)*100);
+    return `<div class="ach-row ${unlocked?'unlocked':''}">
+      <div class="ach-badge">${a.badge}</div>
+      <div style="flex:1;">
+        <p class="ach-name2">${a.name}</p>
+        <p class="ach-desc">${a.desc}</p>
+        ${unlocked
+          ? `<span class="ach-meta">Unlocked ${unlockDates[a.id]}</span>`
+          : `<div class="ach-bar-track"><div class="ach-bar-fill" style="width:${prog}%"></div></div><span class="ach-meta" style="color:var(--ink-soft)">${prog}% there</span>`
+        }
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderExampleBox(){
+  const purchase = 18.50;
+  const roundedCharge = Math.ceil(purchase/state.roundupUnit)*state.roundupUnit;
+  const roundup = +(roundedCharge - purchase).toFixed(2);
+  const finalAmt = +(roundup * state.multiplier).toFixed(2);
+  document.getElementById('exampleBox').innerHTML =
+    `Example — purchase of <b>SAR ${purchase.toFixed(2)}</b>, rounded to <b>SAR ${roundedCharge.toFixed(2)}</b>: `+
+    `round-up of <b>SAR ${roundup.toFixed(2)}</b>${state.multiplier>1 ? `, multiplied ${state.multiplier}× to <b>SAR ${finalAmt.toFixed(2)}</b>` : ''} saved.`;
+}
+
+function renderSettings(){
+  document.getElementById('roundupSwitch').classList.toggle('on', state.roundupEnabled);
+  document.querySelectorAll('#roundupSeg .seg-btn').forEach(b => b.classList.toggle('active', +b.dataset.val === state.roundupUnit));
+  document.querySelectorAll('#multSeg .seg-btn').forEach(b => b.classList.toggle('active', +b.dataset.val === state.multiplier));
+  Object.keys(state.notif).forEach(k => {
+    document.querySelector(`[data-notif="${k}"]`).classList.toggle('on', state.notif[k]);
+  });
+  renderExampleBox();
+}
+
+function renderAll(){
+  renderTree(); renderHomeGoal(); renderProgress(); renderGoalsPage(); renderAchievements(); renderSettings();
+}
+
+function goTo(page){
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.dataset.page===page));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.page===page));
+  document.getElementById('pages').scrollTop = 0;
+}
+document.getElementById('bottomnav').addEventListener('click', e => {
+  const btn = e.target.closest('.nav-btn');
+  if(btn) goTo(btn.dataset.page);
+});
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2400);
+}
+
+document.getElementById('simBtn').addEventListener('click', ()=>{
+  if(!state.roundupEnabled){ showToast('Automatic round-up is turned off'); return; }
+  const purchase = Math.random()*40+2;
+  const roundedCharge = Math.ceil(purchase/state.roundupUnit)*state.roundupUnit;
+  let roundup = +(roundedCharge - purchase).toFixed(2);
+  if(roundup <= 0) roundup = state.roundupUnit;
+  const finalAmt = +(roundup * state.multiplier).toFixed(2);
+  state.saved += finalAmt;
+  state.spareChange += finalAmt;
+  state.roundups += 1;
+  state.wateringHistory.unshift({amt:finalAmt, days:0});
+  showToast('SAR ' + finalAmt.toFixed(2) + ' added — your palm tree grew');
+  renderAll();
+});
+
+document.getElementById('roundupSwitch').addEventListener('click', function(){
+  state.roundupEnabled = !state.roundupEnabled;
+  renderSettings();
+});
+document.getElementById('roundupSeg').addEventListener('click', e=>{
+  const b = e.target.closest('.seg-btn'); if(!b) return;
+  state.roundupUnit = +b.dataset.val; renderSettings();
+});
+document.getElementById('multSeg').addEventListener('click', e=>{
+  const b = e.target.closest('.seg-btn'); if(!b) return;
+  state.multiplier = +b.dataset.val; renderSettings();
+});
+document.querySelectorAll('[data-notif]').forEach(sw=>{
+  sw.addEventListener('click', ()=>{
+    const key = sw.dataset.notif;
+    state.notif[key] = !state.notif[key];
+    renderSettings();
+  });
+});
+
+let editingGoalId = null;
+function openGoalModal(id){
+  editingGoalId = id || null;
+  const iconsWrap = document.getElementById('fGoalIcons');
+  const colorsWrap = document.getElementById('fGoalColors');
+  iconsWrap.innerHTML = GOAL_ICONS.map(ic => `<div class="icon-choice" data-icon="${ic}">${ic}</div>`).join('');
+  colorsWrap.innerHTML = GOAL_COLORS.map(c => `<div class="swatch" data-color="${c}" style="background:${c}"></div>`).join('');
+
+  if(id){
+    const g = state.goals.find(g=>g.id===id);
+    document.getElementById('goalModalTitle').textContent = 'Edit goal';
+    document.getElementById('fGoalName').value = g.name;
+    document.getElementById('fGoalTarget').value = g.target;
+    document.getElementById('fGoalDate').value = g.date;
+    iconsWrap.querySelector(`[data-icon="${g.icon}"]`)?.classList.add('selected');
+    colorsWrap.querySelector(`[data-color="${g.color}"]`)?.classList.add('selected');
+    document.getElementById('goalDeleteWrap').style.display = 'flex';
+  } else {
+    document.getElementById('goalModalTitle').textContent = 'New goal';
+    document.getElementById('fGoalName').value = '';
+    document.getElementById('fGoalTarget').value = '';
+    document.getElementById('fGoalDate').value = '';
+    iconsWrap.firstElementChild.classList.add('selected');
+    colorsWrap.firstElementChild.classList.add('selected');
+    document.getElementById('goalDeleteWrap').style.display = 'none';
+  }
+  document.getElementById('goalModalOverlay').classList.add('open');
+}
+document.getElementById('addGoalBtn').addEventListener('click', ()=>openGoalModal(null));
+document.getElementById('goalCancelBtn').addEventListener('click', ()=>{
+  document.getElementById('goalModalOverlay').classList.remove('open');
+});
+document.getElementById('fGoalIcons').addEventListener('click', e=>{
+  const el = e.target.closest('.icon-choice'); if(!el) return;
+  document.querySelectorAll('#fGoalIcons .icon-choice').forEach(i=>i.classList.remove('selected'));
+  el.classList.add('selected');
+});
+document.getElementById('fGoalColors').addEventListener('click', e=>{
+  const el = e.target.closest('.swatch'); if(!el) return;
+  document.querySelectorAll('#fGoalColors .swatch').forEach(i=>i.classList.remove('selected'));
+  el.classList.add('selected');
+});
+document.getElementById('goalSaveBtn').addEventListener('click', ()=>{
+  const name = document.getElementById('fGoalName').value.trim() || 'New goal';
+  const target = Math.max(1, +document.getElementById('fGoalTarget').value || 1000);
+  const date = document.getElementById('fGoalDate').value || '2027-01-01';
+  const icon = document.querySelector('#fGoalIcons .selected')?.dataset.icon || '🎯';
+  const color = document.querySelector('#fGoalColors .selected')?.dataset.color || '#78894f';
+  if(editingGoalId){
+    const g = state.goals.find(g=>g.id===editingGoalId);
+    Object.assign(g, {name, target, date, icon, color});
+  } else {
+    const id = Math.max(0,...state.goals.map(g=>g.id))+1;
+    state.goals.push({id, name, target, date, icon, color});
+    state.activeGoalId = id;
+  }
+  document.getElementById('goalModalOverlay').classList.remove('open');
+  renderAll();
+});
+document.getElementById('goalDeleteBtn').addEventListener('click', ()=>{
+  
+  state.goals = state.goals.filter(g=>g.id!==editingGoalId);
+  if(state.goals.length===0){
+    state.goals.push({id:1,name:'New goal',target:1000,date:'2027-01-01',icon:'🎯',color:'#78894f'});
+  }
+  state.activeGoalId = state.goals[0].id;
+  document.getElementById('goalModalOverlay').classList.remove('open');
+  renderAll();
+});
+document.getElementById('goalModalOverlay').addEventListener('click', e=>{
+  if(e.target.id==='goalModalOverlay') document.getElementById('goalModalOverlay').classList.remove('open');
+});
+
+renderAll();
+</script>
+
+</body>
+</html>
